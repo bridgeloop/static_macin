@@ -2,6 +2,11 @@
 
 d=$(realpath $(dirname $0))
 cd "$d"
+clean() {
+	cd "$d"
+	rm -rf build
+	exit $1
+}
 
 m=inc/mach-o
 check() {
@@ -11,11 +16,6 @@ check() {
 	sha256sum --check --status
 
 	return $?
-}
-clean() {
-	cd "$d"
-	rm -rf build
-	exit $1
 }
 
 if ! check; then
@@ -27,13 +27,15 @@ if ! check; then
 	fi
 fi
 
-if [ $? -ne 0 ]; then
-	clean 1
-fi
-
 mkdir build
 cd build
 gcc -c -O2 ../src/*.c -I../inc $@
+if [ $? -ne 0 ]; then
+	clean 1
+fi
 ld -r -o ../output/static_macin.o *.o
+if [ $? -ne 0 ]; then
+	clean 1
+fi
 
 clean 0
